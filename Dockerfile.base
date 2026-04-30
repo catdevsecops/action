@@ -1,8 +1,8 @@
-ARG BASE_IMAGE=debian:trixie-20260202-slim
+ARG BASE_IMAGE=ghcr.io/actions/actions-runner:2.334.0
 FROM ${BASE_IMAGE}
 
-RUN apt-get update \
-	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+RUN sudo apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive sudo apt-get install -y --no-install-recommends \
 	apt-utils \
 	bash \
 	ca-certificates \
@@ -24,13 +24,13 @@ RUN apt-get update \
 	python3-requests \
 	python3-yaml \
 	unzip \
-	&& rm -rf /var/lib/apt/lists/*
+	&& sudo rm -rf /var/lib/apt/lists/*
 
 ARG TENV_LATEST_VERSION=v4.10.1
 RUN echo "TENV_LATEST_VERSION: ${TENV_LATEST_VERSION}" && \
     ARCH=$(dpkg --print-architecture) && \
     curl -O -L "https://github.com/tofuutils/tenv/releases/download/${TENV_LATEST_VERSION}/tenv_${TENV_LATEST_VERSION}_${ARCH}.deb" && \
-    dpkg -i "tenv_${TENV_LATEST_VERSION}_${ARCH}.deb" && \
+    sudo dpkg -i "tenv_${TENV_LATEST_VERSION}_${ARCH}.deb" && \
     rm -f "tenv_${TENV_LATEST_VERSION}_${ARCH}.deb"
 
 ARG TOFU_VERSIONS=1.6.3,1.9.1
@@ -43,7 +43,7 @@ ENV INFRACOST_VERSION=v0.10.42
 RUN ARCH=$(uname -m | sed 's/x86_64/amd64/g' | sed 's/aarch64/arm64/g') && \
     curl -fsSL -o /tmp/infracost-linux-${ARCH}.tar.gz "https://github.com/infracost/infracost/releases/download/${INFRACOST_VERSION}/infracost-linux-${ARCH}.tar.gz" && \
     tar -C /tmp -xzf /tmp/infracost-linux-${ARCH}.tar.gz && \
-    mv /tmp/infracost-linux-${ARCH} /usr/local/bin/infracost && \
+    sudo mv /tmp/infracost-linux-${ARCH} /usr/local/bin/infracost && \
     rm -f /tmp/infracost-linux-${ARCH}.tar.gz
 
 ENV CONFTEST_VERSION=0.58.0
@@ -51,7 +51,7 @@ RUN ARCH=$(uname -m | sed 's/aarch64/arm64/g') && \
     mkdir /tmp/conftest && \
     curl -fsSL -o /tmp/conftest/conftest.tar.gz "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_${ARCH}.tar.gz" && \
     tar -C /tmp/conftest -xzf /tmp/conftest/conftest.tar.gz && \
-    mv /tmp/conftest/conftest /usr/local/bin/conftest && \
+    sudo mv /tmp/conftest/conftest /usr/local/bin/conftest && \
     rm -rf /tmp/conftest
 
 ENV OPA_VERSION=1.7.1
@@ -62,13 +62,13 @@ RUN echo "AWSCLI_VERSION: ${AWSCLI_VERSION}" && \
     mkdir /tmp/awscli && \
     curl -fsSL -o /tmp/awscli/awscli.zip "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" && \
     unzip -q /tmp/awscli/awscli.zip -d /tmp/awscli/ && \
-    /tmp/awscli/aws/install > /dev/null && \
+    sudo /tmp/awscli/aws/install > /dev/null && \
     rm -rf /tmp/awscli
 
 ENV CHECKOV_VERSION=2.5.10
-RUN python3 -m venv /opt/checkov && \
-    /opt/checkov/bin/pip install checkov==${CHECKOV_VERSION} && \
-    ln -s /opt/checkov/bin/checkov /usr/local/bin/checkov
+RUN sudo python3 -m venv /opt/checkov && \
+    sudo /opt/checkov/bin/pip install checkov==${CHECKOV_VERSION} && \
+    sudo ln -s /opt/checkov/bin/checkov /usr/local/bin/checkov
 
 ENV RESOURCELY_VERSION=1.0.45
 
@@ -81,12 +81,12 @@ COPY gcloud-cli-setup.sh /gcloud-cli-setup.sh
 COPY azure-cli-setup.sh /azure-cli-setup.sh
 COPY kubectl-cli-setup.sh /kubectl-cli-setup.sh
 
-RUN mkdir /usr/local/share/keys
+RUN sudo mkdir /usr/local/share/keys
 
-RUN curl --output /usr/local/share/keys/hashicorp-pgp-key.txt https://www.hashicorp.com/.well-known/pgp-key.txt
+RUN sudo curl --output /usr/local/share/keys/hashicorp-pgp-key.txt https://www.hashicorp.com/.well-known/pgp-key.txt
 ENV TFENV_HASHICORP_PGP_KEY=/usr/local/share/keys/hashicorp-pgp-key.txt
 
-RUN curl --output /usr/local/share/keys/opentofu.asc https://get.opentofu.org/opentofu.asc
+RUN sudo curl --output /usr/local/share/keys/opentofu.asc https://get.opentofu.org/opentofu.asc
 ENV TOFUENV_OPENTOFU_PGP_KEY=/usr/local/share/keys/opentofu.asc
 
 # HashiCorp's signatures for old releases of Terraform have expired so we can only do hash checks
@@ -95,7 +95,7 @@ ENV TENV_VALIDATION=sha
 ARG ADDITIONAL_PKGS_TO_INSTALL
 # Install additional OS packages dynamically based on ADDITIONAL_PKGS_TO_INSTALL. versions should be comma separated.
 RUN if [ -n "${ADDITIONAL_PKGS_TO_INSTALL}" ]; then \
-    apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends $(echo "${ADDITIONAL_PKGS_TO_INSTALL}" | tr ',' ' ') && \
-    rm -rf /var/lib/apt/lists/*; \
+    sudo apt-get update && \
+    DEBIAN_FRONTEND=noninteractive sudo apt-get install -y --no-install-recommends $(echo "${ADDITIONAL_PKGS_TO_INSTALL}" | tr ',' ' ') && \
+    sudo rm -rf /var/lib/apt/lists/*; \
     fi
