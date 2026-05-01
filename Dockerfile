@@ -8,4 +8,4 @@ COPY terrat_runner /terrat_runner
 
 COPY proxy/bin /usr/local/proxy/bin
 
-ENTRYPOINT ["/entrypoint.sh"]
+# ENTRYPOINT ["/entrypoint.sh"]
